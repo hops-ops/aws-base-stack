@@ -1,62 +1,80 @@
 # code: language=yaml
 #
-# Initialize $state namespace with spec.raw and spec.effective
-# This is the first file in the pipeline - initializes $state which subsequent files extend
+# Initialize $state with spec defaults
 #
 
 {{- $xr := getCompositeResource . }}
-{{- $metadata := $xr.metadata | default dict }}
 {{- $spec := $xr.spec | default dict }}
+{{- $metadata := $xr.metadata | default dict }}
 
 # ==============================================================================
-# Build spec.effective with all defaults applied
+# Core defaults
 # ==============================================================================
-
-# Core identification
 {{- $name := $metadata.name | default "aws-load-balancer-controller" }}
-{{- $clusterName := $spec.clusterName }}
+{{- $clusterName := $spec.clusterName | default $name }}
+{{- $namespace := $spec.namespace | default "kube-system" }}
 {{- $managementPolicies := $spec.managementPolicies | default (list "*") }}
 
-# Default labels: managed=true + <kind>=<name>
+# Labels
 {{- $defaultLabels := dict
   "hops.ops.com.ai/managed" "true"
-  (printf "hops.ops.com.ai/%s" (lower $xr.kind)) $name
+  "hops.ops.com.ai/loadbalancercontroller" $name
 }}
 {{- $labels := merge $defaultLabels ($spec.labels | default dict) }}
 
 # ==============================================================================
-# Helm configuration with defaults
+# Provider config refs
 # ==============================================================================
-
-# Provider config (defaults to clusterName with ProviderConfig)
-{{- $providerConfigRef := dict
-  "name" (($spec.providerConfigRef | default dict).name | default $clusterName | default "default")
-  "kind" (($spec.providerConfigRef | default dict).kind | default "ProviderConfig")
+{{- $helmProviderConfigRef := $spec.helmProviderConfigRef | default dict }}
+{{- $helmProviderConfigRef = dict
+  "name" ($helmProviderConfigRef.name | default $clusterName)
+  "kind" ($helmProviderConfigRef.kind | default "ProviderConfig")
 }}
 
-{{- $namespace := $spec.namespace | default "kube-system" }}
-{{- $releaseName := $spec.name | default $name }}
-{{- $values := $spec.values | default dict }}
-{{- $overrideAllValues := $spec.overrideAllValues | default dict }}
+{{- $awsProviderConfigRef := $spec.awsProviderConfigRef | default dict }}
+{{- $awsProviderConfigRef = dict
+  "name" ($awsProviderConfigRef.name | default "default")
+  "kind" ($awsProviderConfigRef.kind | default "ProviderConfig")
+}}
 
 # ==============================================================================
-# Initialize $state namespace
+# AWS defaults
+# ==============================================================================
+{{- $aws := $spec.aws | default dict }}
+{{- $awsRegion := $aws.region }}
+
+# Default tags
+{{- $defaultTags := dict
+  "hops.ops.com.ai/managed" "true"
+  "hops.ops.com.ai/loadbalancercontroller" $name
+}}
+{{- $awsTags := merge $defaultTags ($aws.tags | default dict) }}
+
+# ==============================================================================
+# Initialize $state
 # ==============================================================================
 {{- $state := dict
-  "spec" (dict
-    "raw" $spec
-    "effective" (dict
-      "name" $name
-      "clusterName" $clusterName
-      "managementPolicies" $managementPolicies
-      "labels" $labels
-      "providerConfigRef" $providerConfigRef
-      "namespace" $namespace
-      "releaseName" $releaseName
-      "values" $values
-      "overrideAllValues" $overrideAllValues
-    )
+  "name" $name
+  "clusterName" $clusterName
+  "namespace" $namespace
+  "managementPolicies" $managementPolicies
+  "labels" $labels
+  "helm" (dict
+    "providerConfigRef" $helmProviderConfigRef
+    "releaseName" ($spec.name | default $name)
+    "namespace" $namespace
+    "values" ($spec.values | default dict)
+    "overrideAllValues" ($spec.overrideAllValues | default dict)
   )
-  "observed" (dict)
-  "awsLoadBalancerController" (dict)
+  "aws" (dict
+    "region" $awsRegion
+    "providerConfigRef" $awsProviderConfigRef
+    "permissionsBoundaryArn" ($aws.permissionsBoundaryArn | default "")
+    "rolePrefix" ($aws.rolePrefix | default "")
+    "tags" $awsTags
+  )
+  "serviceAccount" (dict
+    "name" "aws-load-balancer-controller"
+    "namespace" $namespace
+  )
 }}

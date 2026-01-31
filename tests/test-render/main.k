@@ -2,19 +2,15 @@ import models.io.upbound.dev.meta.v1alpha1 as metav1alpha1
 import models.k8s.apimachinery.pkg.apis.meta.v1 as metav1
 
 # ==============================================================================
-# Unit tests for LoadBalancerController XRD
-#
-# Philosophy: Test YOUR API, not the provider's API.
-# - render/validate already checks provider schema correctness
-# - Tests should verify XRD spec fields produce expected behavior
+# Unit tests for helm.aws LoadBalancerController XRD
 # ==============================================================================
 
 _items = [
     # ==========================================================================
-    # Test 1: Minimal input renders Helm release with clusterName
+    # Test 1: Minimal input renders Helm Release and Pod Identity
     # ==========================================================================
     metav1alpha1.CompositionTest {
-        metadata.name = "minimal-renders-helm-release"
+        metadata.name = "minimal-renders-helm-and-pod-identity"
         spec = {
             compositionPath = "apis/loadbalancercontrollers/composition.yaml"
             xrdPath = "apis/loadbalancercontrollers/definition.yaml"
@@ -26,6 +22,9 @@ _items = [
                 metadata.name = "test-alb"
                 spec = {
                     clusterName = "test-cluster"
+                    aws = {
+                        region = "us-east-1"
+                    }
                 }
             }
             assertResources = [
@@ -35,15 +34,28 @@ _items = [
                     metadata.name = "test-alb"
                     spec.forProvider.values.clusterName = "test-cluster"
                 }
+                {
+                    apiVersion = "aws.hops.ops.com.ai/v1alpha1"
+                    kind = "PodIdentity"
+                    metadata.name = "test-alb-pod-identity"
+                    spec = {
+                        clusterName = "test-cluster"
+                        region = "us-east-1"
+                        serviceAccount = {
+                            name = "aws-load-balancer-controller"
+                            namespace = "kube-system"
+                        }
+                    }
+                }
             ]
         }
     }
 
     # ==========================================================================
-    # Test 2: Custom labels are applied and merged with defaults
+    # Test 2: Custom labels are applied to both resources
     # ==========================================================================
     metav1alpha1.CompositionTest {
-        metadata.name = "custom-labels-merged-with-defaults"
+        metadata.name = "custom-labels-applied-to-both"
         spec = {
             compositionPath = "apis/loadbalancercontrollers/composition.yaml"
             xrdPath = "apis/loadbalancercontrollers/definition.yaml"
@@ -57,7 +69,9 @@ _items = [
                     clusterName = "test-cluster"
                     labels = {
                         team = "platform"
-                        environment = "staging"
+                    }
+                    aws = {
+                        region = "us-east-1"
                     }
                 }
             }
@@ -71,7 +85,18 @@ _items = [
                             "hops.ops.com.ai/managed" = "true"
                             "hops.ops.com.ai/loadbalancercontroller" = "labeled-alb"
                             team = "platform"
-                            environment = "staging"
+                        }
+                    }
+                }
+                {
+                    apiVersion = "aws.hops.ops.com.ai/v1alpha1"
+                    kind = "PodIdentity"
+                    metadata = {
+                        name = "labeled-alb-pod-identity"
+                        labels = {
+                            "hops.ops.com.ai/managed" = "true"
+                            "hops.ops.com.ai/loadbalancercontroller" = "labeled-alb"
+                            team = "platform"
                         }
                     }
                 }
@@ -80,10 +105,10 @@ _items = [
     }
 
     # ==========================================================================
-    # Test 3: overrideAllValues replaces defaults
+    # Test 3: AWS rolePrefix propagates to PodIdentity
     # ==========================================================================
     metav1alpha1.CompositionTest {
-        metadata.name = "override-all-values"
+        metadata.name = "aws-role-prefix-propagates"
         spec = {
             compositionPath = "apis/loadbalancercontrollers/composition.yaml"
             xrdPath = "apis/loadbalancercontrollers/definition.yaml"
@@ -92,25 +117,25 @@ _items = [
             xr = {
                 apiVersion = "helm.aws.hops.ops.com.ai/v1alpha1"
                 kind = "LoadBalancerController"
-                metadata.name = "override-test"
+                metadata.name = "prefixed-alb"
                 spec = {
-                    clusterName = "my-cluster"
-                    overrideAllValues = {
-                        clusterName = "my-cluster"
-                        fullnameOverride = "custom-alb"
-                        replicaCount = 3
+                    clusterName = "prod-cluster"
+                    aws = {
+                        region = "us-west-2"
+                        rolePrefix = "prod-"
                     }
                 }
             }
             assertResources = [
                 {
-                    apiVersion = "helm.m.crossplane.io/v1beta1"
-                    kind = "Release"
-                    metadata.name = "override-test"
-                    spec.forProvider.values = {
-                        clusterName = "my-cluster"
-                        fullnameOverride = "custom-alb"
-                        replicaCount = 3
+                    apiVersion = "aws.hops.ops.com.ai/v1alpha1"
+                    kind = "PodIdentity"
+                    metadata.name = "prefixed-alb-pod-identity"
+                    spec = {
+                        rolePrefix = "prod-"
+                        serviceAccount = {
+                            namespace = "kube-system"
+                        }
                     }
                 }
             ]
@@ -133,6 +158,9 @@ _items = [
                 metadata.name = "ns-test"
                 spec = {
                     clusterName = "test-cluster"
+                    aws = {
+                        region = "us-east-1"
+                    }
                 }
             }
             assertResources = [

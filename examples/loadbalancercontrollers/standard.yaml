@@ -13,3 +13,8 @@ spec:
     serviceAccount:
       create: true
       name: aws-load-balancer-controller
+  aws:
+    region: us-west-2
+    rolePrefix: prod-
+    tags:
+      environment: production

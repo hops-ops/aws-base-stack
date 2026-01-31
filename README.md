@@ -1,28 +1,28 @@
 # helm-aws-load-balancer-controller
 
-A Crossplane Configuration package that installs the AWS Load Balancer Controller Helm chart with a minimal, stable interface.
+A Crossplane Configuration package that installs the AWS Load Balancer Controller Helm chart with automated AWS Pod Identity for IAM permissions.
 
 ## Overview
 
-`helm-aws-load-balancer-controller` renders a single Helm release for the AWS Load Balancer Controller. It exposes only the inputs needed for chart values, namespace, and release name, keeping the interface stable while allowing full Helm overrides.
-
-The AWS Load Balancer Controller manages AWS Elastic Load Balancers for Kubernetes Ingress and Service resources.
+`helm-aws-load-balancer-controller` renders a Helm release for the AWS Load Balancer Controller and an AWS Pod Identity for automated IAM setup. The controller manages AWS Elastic Load Balancers for Kubernetes Ingress and Service resources.
 
 ## Features
 
-- **Minimal Helm interface**: values and overrideAllValues with stable defaults
+- **Helm release**: Installs the AWS Load Balancer Controller chart with stable defaults
+- **AWS Pod Identity**: Automatically provisions IAM role with the official ALB controller policy
+- **Deletion ordering**: Usage resource ensures IAM cleanup happens after chart removal
 - **Required clusterName**: The chart requires the EKS cluster name
 - **Default namespace**: Installs to `kube-system` by default
-- **GitOps friendly**: Ships a `.gitops/` deploy chart
 
 ## Prerequisites
 
 - Crossplane installed in the cluster
 - Crossplane providers:
-  - `provider-helm` (>=v1.0.2)
-- Crossplane function:
+  - `provider-helm` (>=v1.0.6)
+- Crossplane configurations:
+  - `aws-pod-identity` (>=v0.5.0)
+- Crossplane functions:
   - `function-auto-ready` (>=v0.6.0)
-- AWS Load Balancer Controller requires IAM permissions via IRSA or Pod Identity
 
 ## Quick Start
 
@@ -43,12 +43,8 @@ metadata:
   namespace: example-env
 spec:
   clusterName: my-eks-cluster
-  values:
-    serviceAccount:
-      create: true
-      name: aws-load-balancer-controller
-      annotations:
-        eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/AWSLoadBalancerControllerRole
+  aws:
+    region: us-east-1
 ```
 
 ## Configuration Options
@@ -56,14 +52,19 @@ spec:
 | Field | Description | Default |
 |-------|-------------|---------|
 | `clusterName` | Name of the EKS cluster (required) | - |
+| `aws.region` | AWS region (required) | - |
+| `aws.rolePrefix` | Prefix for the IAM role name | `""` |
+| `aws.permissionsBoundaryArn` | ARN of IAM permissions boundary | `""` |
+| `aws.tags` | Custom tags for AWS resources | `{}` |
 | `namespace` | Namespace for the Helm release | `kube-system` |
 | `name` | Helm release name | XR metadata.name |
-| `providerConfigRef` | Reference to Helm ProviderConfig | `{name: clusterName, kind: ProviderConfig}` |
+| `helmProviderConfigRef` | Reference to Helm ProviderConfig | `{name: clusterName, kind: ProviderConfig}` |
+| `awsProviderConfigRef` | Reference to AWS ProviderConfig | `{name: "default", kind: ProviderConfig}` |
 | `labels` | Labels applied to all resources | `{hops.ops.com.ai/managed: "true"}` |
 | `values` | Helm values merged with defaults | `{}` |
 | `overrideAllValues` | Helm values replacing all defaults | `{}` |
 
-## Default Values
+## Default Helm Values
 
 The chart is installed with these default values:
 

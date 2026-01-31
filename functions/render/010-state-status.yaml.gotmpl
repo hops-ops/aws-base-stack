@@ -3,22 +3,47 @@
 # Compute status values from observed state
 #
 
-{{- $alb := $state.awsLoadBalancerController }}
-{{- $obs := $state.observed }}
+# ==============================================================================
+# Extract observed state from composed resources
+# ==============================================================================
+{{- $observed := $.observed.resources | default dict }}
+
+# Check if helm-release-alb is ready
+{{- $helmReleaseObs := get $observed "helm-release-alb" | default dict }}
+{{- $helmReleaseResource := $helmReleaseObs.resource | default dict }}
+{{- $helmReleaseStatus := $helmReleaseResource.status | default dict }}
+{{- $helmReleaseConditions := $helmReleaseStatus.conditions | default list }}
+{{- $helmReleaseReady := false }}
+{{- range $cond := $helmReleaseConditions }}
+  {{- if and (eq $cond.type "Ready") (eq $cond.status "True") }}
+    {{- $helmReleaseReady = true }}
+  {{- end }}
+{{- end }}
+
+# Check if pod-identity is ready
+{{- $podIdentityObs := get $observed "pod-identity" | default dict }}
+{{- $podIdentityResource := $podIdentityObs.resource | default dict }}
+{{- $podIdentityStatus := $podIdentityResource.status | default dict }}
+{{- $podIdentityConditions := $podIdentityStatus.conditions | default list }}
+{{- $podIdentityReady := false }}
+{{- range $cond := $podIdentityConditions }}
+  {{- if and (eq $cond.type "Ready") (eq $cond.status "True") }}
+    {{- $podIdentityReady = true }}
+  {{- end }}
+{{- end }}
 
 # ==============================================================================
 # Compute status output
 # ==============================================================================
 
-# Determine overall ready state from observed Helm release
-{{- $helmReady := $obs.helmRelease.ready | default false }}
-{{- $ready := $helmReady }}
+# Ready state determined by function-auto-ready
+{{- $ready := false }}
+
+{{- $state = set $state "observed" (dict
+  "helmRelease" (dict "ready" $helmReleaseReady)
+  "podIdentity" (dict "ready" $podIdentityReady)
+) }}
 
 {{- $state = set $state "status" (dict
   "ready" $ready
-  "release" (dict
-    "name" $alb.releaseName
-    "namespace" $alb.namespace
-    "ready" $helmReady
-  )
 ) }}

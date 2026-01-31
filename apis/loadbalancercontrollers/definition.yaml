@@ -8,17 +8,18 @@ spec:
     kind: LoadBalancerController
     plural: loadbalancercontrollers
   scope: Namespaced
+  defaultCompositeDeletePolicy: Foreground
   versions:
   - name: v1alpha1
     referenceable: true
     served: true
     schema:
       openAPIV3Schema:
-        description: LoadBalancerController installs the AWS Load Balancer Controller Helm chart.
+        description: LoadBalancerController installs the AWS Load Balancer Controller Helm chart with AWS Pod Identity.
         type: object
         properties:
           spec:
-            description: AWSLoadBalancerControllerSpec defines the desired state of LoadBalancerController.
+            description: LoadBalancerControllerSpec defines the desired state.
             type: object
             properties:
               clusterName:
@@ -32,17 +33,17 @@ spec:
                 default:
                 - "*"
               labels:
-                description: Custom labels applied to all managed resources. Merged with default labels (hops.ops.com.ai/managed, hops.ops.com.ai/loadbalancercontroller).
+                description: Custom labels applied to all managed resources.
                 type: object
                 additionalProperties:
                   type: string
                 x-kubernetes-preserve-unknown-fields: true
-              providerConfigRef:
-                description: Reference to the Helm ProviderConfig.
+              helmProviderConfigRef:
+                description: Reference to the Helm ProviderConfig. Defaults to clusterName.
                 type: object
                 properties:
                   name:
-                    description: Name of the ProviderConfig. Defaults to clusterName.
+                    description: Name of the Helm ProviderConfig.
                     type: string
                   kind:
                     description: Kind of the ProviderConfig. Defaults to ProviderConfig.
@@ -50,6 +51,16 @@ spec:
                     enum:
                     - ProviderConfig
                     - ClusterProviderConfig
+              awsProviderConfigRef:
+                description: Reference to the AWS ProviderConfig. Defaults to "default".
+                type: object
+                properties:
+                  name:
+                    description: Name of the AWS ProviderConfig.
+                    type: string
+                  kind:
+                    description: Kind of the ProviderConfig. Defaults to ProviderConfig.
+                    type: string
               namespace:
                 description: Namespace for the Helm release. Defaults to kube-system.
                 type: string
@@ -64,24 +75,36 @@ spec:
                 description: Helm values that replace all defaults. Must include clusterName.
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
+              aws:
+                description: AWS configuration for Pod Identity.
+                type: object
+                properties:
+                  region:
+                    description: AWS region for the EKS cluster.
+                    type: string
+                  permissionsBoundaryArn:
+                    description: ARN of the IAM permissions boundary to apply to the role.
+                    type: string
+                  rolePrefix:
+                    description: Prefix for the IAM role name.
+                    type: string
+                  tags:
+                    description: Custom tags applied to AWS resources.
+                    type: object
+                    additionalProperties:
+                      type: string
+                    x-kubernetes-preserve-unknown-fields: true
+                required:
+                - region
             required:
             - clusterName
+            - aws
           status:
-            description: AWSLoadBalancerControllerStatus defines the observed state of LoadBalancerController.
+            description: LoadBalancerControllerStatus defines the observed state.
             type: object
             properties:
               ready:
-                description: Overall readiness of the AWS Load Balancer Controller installation.
+                description: Overall readiness.
                 type: boolean
-              release:
-                description: Status of the Helm release.
-                type: object
-                properties:
-                  name:
-                    type: string
-                  namespace:
-                    type: string
-                  ready:
-                    type: boolean
         required:
         - spec
