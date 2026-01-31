@@ -10,13 +10,13 @@ on:
       - reopened
       - synchronize
     paths:
-      - '.github/workflows/on-pr.yaml'
-      - '.gitops/**'
-      - 'apis/**'
-      - 'examples/**'
-      - 'tests/**'
-      - 'functions/**'
-      - 'upbound.yaml'
+      - ".github/workflows/on-pr.yaml"
+      - ".gitops/**"
+      - "apis/**"
+      - "examples/**"
+      - "tests/**"
+      - "functions/**"
+      - "upbound.yaml"
 
 permissions:
   packages: write
@@ -42,6 +42,18 @@ jobs:
 
   e2e:
     uses: unbounded-tech/workflows-crossplane/.github/workflows/e2e.yaml@v2.13.0
+    with:
+      aws: true
+      aws-use-oidc: true
+      aws-account-id: "034489662075"
+      aws-region: us-east-2
+      debug-resource-types: |
+        [
+          "autoeksclusters.aws.hops.ops.com.ai",
+          "podidentities.aws.hops.ops.com.ai"
+        ]
+      timeout-minutes: 60
+      cleanup-timeout-minutes: 45
 
   publish:
     needs:
