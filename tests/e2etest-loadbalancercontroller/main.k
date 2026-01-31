@@ -20,7 +20,6 @@
 # 2. Ensure the persistent hops-test network exists (from aws-network e2e test)
 #
 # 3. Run: make e2e
-
 import base64
 import file
 import datetime
@@ -31,7 +30,6 @@ import models.ai.com.ops.hops.aws.helm.v1alpha1 as helmawsv1alpha1
 # Read AWS credentials from local file (gitignored)
 _creds = file.read("secrets/aws-creds")
 _base64_creds = base64.encode(_creds)
-
 # =============================================================================
 # Test Configuration
 # =============================================================================
@@ -39,16 +37,18 @@ _now = str(int(math.floor(datetime.ticks())))
 _test_name = "e2e-alb-" + _now
 _namespace = "default"
 _region = "us-east-2"
-_account_id = "034489662075"  # CI test account
+# CI test account
+_account_id = "034489662075"
 _admin_role_arn = "arn:aws:iam::034489662075:role/aws-reserved/sso.amazonaws.com/us-east-2/AWSReservedSSO_AdminAccess_e8d960044a7864f6"
-
 # =============================================================================
 # Persistent Network Infrastructure (from aws-network e2e test - hops-test)
 # =============================================================================
 # Private subnet IDs for the EKS cluster - these are already created and orphaned
 _private_subnet_ids = [
-    "subnet-0ba2f584c25e9435d"  # private-a
-    "subnet-02e4d512f8859e684"  # private-b
+    # private-a
+    "subnet-0ba2f584c25e9435d"
+    # private-b
+    "subnet-02e4d512f8859e684"
 ]
 
 _items = [
@@ -59,10 +59,11 @@ _items = [
                 autoUpgrade.channel = "Rapid"
             }
             defaultConditions = ["Ready"]
-            timeoutSeconds = 5400  # 90 minutes for EKS cluster creation
-            cleanupTimeoutSeconds = 1800  # 30 minutes for cleanup
+            # 90 minutes for EKS cluster creation
+            timeoutSeconds = 5400
+            # 30 minutes for cleanup
+            cleanupTimeoutSeconds = 1800
             skipDelete = False
-
             # initResources: Install infrastructure Configuration packages
             # Note: helm-aws-load-balancer-controller and aws-pod-identity are auto-installed as dependencies
             initResources = [
@@ -78,7 +79,6 @@ _items = [
                     }
                 }
             ]
-
             # extraResources: Credentials and ProviderConfigs (not deleted during cleanup)
             extraResources = [
                 # AWS credentials secret
@@ -112,7 +112,6 @@ _items = [
                         }
                     }
                 }
-
                 # Kubernetes ProviderConfig for account ProviderConfig Objects
                 # Uses InjectedIdentity for in-cluster access
                 {
@@ -127,7 +126,7 @@ _items = [
                             source: "InjectedIdentity"
                         }
                     }
-                },
+                }
                 # DeploymentRuntimeConfig for Kubernetes provider with known SA name
                 {
                     apiVersion: "pkg.crossplane.io/v1beta1"
@@ -142,7 +141,7 @@ _items = [
                             }
                         }
                     }
-                },
+                }
                 # ServiceAccount for Kubernetes provider
                 {
                     apiVersion: "v1"
@@ -151,7 +150,7 @@ _items = [
                         name: "crossplane-contrib-provider-kubernetes"
                         namespace: "crossplane-system"
                     }
-                },
+                }
                 # ClusterRoleBinding granting cluster-admin to the K8s provider SA
                 {
                     apiVersion: "rbac.authorization.k8s.io/v1"
@@ -171,7 +170,7 @@ _items = [
                             namespace: "crossplane-system"
                         }
                     ]
-                },
+                }
                 # Provider with runtimeConfigRef to use our DeploymentRuntimeConfig
                 {
                     apiVersion: "pkg.crossplane.io/v1"
@@ -187,7 +186,6 @@ _items = [
                     }
                 }
             ]
-
             # manifests: All XRs that need cleanup (AutoEKSCluster, LoadBalancerController)
             # Note: Uses persistent hops-test network - no Network manifest needed
             manifests = [
@@ -227,10 +225,9 @@ _items = [
                         }
                     }
                 }
-
                 # 2. helm.aws LoadBalancerController - installs ALB controller with AWS Pod Identity
                 helmawsv1alpha1.LoadBalancerController {
-                    metadata.name = "load-balancer-controller"
+                    metadata.name = "e2etest-lbc"
                     metadata.namespace = _namespace
                     spec = {
                         clusterName = _test_name

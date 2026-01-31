@@ -55,6 +55,8 @@
 # ==============================================================================
 {{- $state := dict
   "name" $name
+  "podIdentityName" $name
+  "usageName" (printf "%s-delete-helm-before-pod-identity" $name)
   "clusterName" $clusterName
   "namespace" $namespace
   "managementPolicies" $managementPolicies
