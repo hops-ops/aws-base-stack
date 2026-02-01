@@ -37,7 +37,7 @@ _items = [
                 {
                     apiVersion = "aws.hops.ops.com.ai/v1alpha1"
                     kind = "PodIdentity"
-                    metadata.name = "test-alb-pod-identity"
+                    metadata.name = "test-alb"
                     spec = {
                         clusterName = "test-cluster"
                         region = "us-east-1"
@@ -92,7 +92,7 @@ _items = [
                     apiVersion = "aws.hops.ops.com.ai/v1alpha1"
                     kind = "PodIdentity"
                     metadata = {
-                        name = "labeled-alb-pod-identity"
+                        name = "labeled-alb"
                         labels = {
                             "hops.ops.com.ai/managed" = "true"
                             "hops.ops.com.ai/loadbalancercontroller" = "labeled-alb"
@@ -130,7 +130,7 @@ _items = [
                 {
                     apiVersion = "aws.hops.ops.com.ai/v1alpha1"
                     kind = "PodIdentity"
-                    metadata.name = "prefixed-alb-pod-identity"
+                    metadata.name = "prefixed-alb"
                     spec = {
                         rolePrefix = "prod-"
                         serviceAccount = {
