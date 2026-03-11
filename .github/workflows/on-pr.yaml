@@ -27,7 +27,7 @@ permissions:
 
 jobs:
   validate:
-    uses: unbounded-tech/workflows-crossplane/.github/workflows/validate.yaml@v2.19.1
+    uses: unbounded-tech/workflows-crossplane/.github/workflows/validate.yaml@v2.20.0
     with:
       examples: |
         [
@@ -38,15 +38,22 @@ jobs:
       error_on_missing_schemas: true
 
   test:
-    uses: unbounded-tech/workflows-crossplane/.github/workflows/test.yaml@v2.19.1
+    uses: unbounded-tech/workflows-crossplane/.github/workflows/test.yaml@v2.20.0
 
   e2e:
-    uses: unbounded-tech/workflows-crossplane/.github/workflows/e2e.yaml@v2.19.1
+    uses: unbounded-tech/workflows-crossplane/.github/workflows/e2e.yaml@v2.20.0
+    uses: unbounded-tech/workflows-crossplane/.github/workflows/e2e.yaml@v2.20.0
     with:
       aws: true
       aws-use-oidc: true
       aws-account-id: "034489662075"
       aws-region: us-east-2
+      env-vars: |
+        {
+          "ADMIN_ROLE_ARN": "${{ vars.ADMIN_ROLE_ARN }}",
+          "PRIVATE_SUBNET_ID_A": "${{ vars.PRIVATE_SUBNET_ID_A }}",
+          "PRIVATE_SUBNET_ID_B": "${{ vars.PRIVATE_SUBNET_ID_B }}"
+        }
       debug-resource-types: |
         [
           "autoeksclusters.aws.hops.ops.com.ai",
@@ -60,7 +67,7 @@ jobs:
       - validate
       - test
       - e2e
-    uses: unbounded-tech/workflows-crossplane/.github/workflows/publish.yaml@v2.19.1
+    uses: unbounded-tech/workflows-crossplane/.github/workflows/publish.yaml@v2.20.0
     secrets: inherit
     with:
       tag: pr-${{ github.event.pull_request.number }}-${{ github.sha }}
