@@ -1,11 +1,11 @@
 SHELL := /bin/bash
 
-PACKAGE ?= aws-base-stack
-XRD_DIR := apis/basestacks
+PACKAGE ?= aws-lbc-stack
+XRD_DIR := apis/lbcstacks
 COMPOSITION := $(XRD_DIR)/composition.yaml
 DEFINITION := $(XRD_DIR)/definition.yaml
 CONFIGURATION := $(XRD_DIR)/configuration.yaml
-EXAMPLE_DEFAULT := examples/basestacks/standard.yaml
+EXAMPLE_DEFAULT := examples/lbcstacks/standard.yaml
 RENDER_TESTS := $(wildcard tests/test-*)
 E2E_TESTS := $(wildcard tests/e2etest*)
 
@@ -24,8 +24,8 @@ generate-configuration:
 # Examples list - mirrors GitHub Actions workflow
 # Format: example_path::observed_resources_path (observed_resources_path is optional)
 EXAMPLES := \
-    examples/basestacks/minimal.yaml:: \
-    examples/basestacks/standard.yaml::
+    examples/lbcstacks/minimal.yaml:: \
+    examples/lbcstacks/standard.yaml::
 
 # Render all examples (parallel execution, output shown per-job when complete)
 render\:all:
@@ -98,11 +98,11 @@ validate: ; @$(MAKE) generate-configuration 'validate:all'
 
 # Single example targets
 render\:%:
-	@example="examples/basestacks/$*.yaml"; \
+	@example="examples/lbcstacks/$*.yaml"; \
 	up composition render --xrd=$(DEFINITION) $(COMPOSITION) $$example
 
 validate\:%: generate-configuration
-	@example="examples/basestacks/$*.yaml"; \
+	@example="examples/lbcstacks/$*.yaml"; \
 	up composition render --xrd=$(DEFINITION) $(COMPOSITION) $$example \
 		--include-full-xr --quiet | \
 		crossplane beta validate $(XRD_DIR) --error-on-missing-schemas -

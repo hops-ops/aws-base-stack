@@ -1,7 +1,7 @@
 apiVersion: meta.dev.upbound.io/v2alpha1
 kind: Project
 metadata:
-  name: aws-base-stack
+  name: aws-lbc-stack
 spec:
   dependsOn:
   - apiVersion: pkg.crossplane.io/v1
@@ -20,9 +20,9 @@ spec:
   license: Apache-2.0
   maintainer: Patrick Lee Scott <pat@patscott.io>
   readme: |
-    # aws-base-stack
+    # aws-lbc-stack
 
     Installs the AWS Load Balancer Controller Helm chart with AWS Pod Identity
     for automated IAM permissions.
-  repository: ghcr.io/hops-ops/aws-base-stack
-  source: github.com/hops-ops/aws-base-stack
+  repository: ghcr.io/hops-ops/aws-lbc-stack
+  source: github.com/hops-ops/aws-lbc-stack

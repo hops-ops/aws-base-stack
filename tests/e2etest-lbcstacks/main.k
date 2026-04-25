@@ -1,10 +1,10 @@
-# e2etest-basestacks - aws BaseStack E2E Test
+# e2etest-lbcstacks - aws LBCStack E2E Test
 # =============================================
 # Tests installation of aws-load-balancer-controller with AWS Pod Identity.
 #
 # This test creates:
 # 1. An AutoEKSCluster using subnet IDs from the persistent hops-test network
-# 2. An aws BaseStack that composes:
+# 2. An aws LBCStack that composes:
 #    - Helm Release for aws-load-balancer-controller
 #    - aws.hops.ops.com.ai/PodIdentity (IAM role + Pod Identity for ALB)
 #
@@ -53,7 +53,7 @@ _private_subnet_ids = [
 
 _items = [
     metav1alpha1.E2ETest {
-        metadata.name = "basestacks"
+        metadata.name = "lbcstacks"
         spec = {
             crossplane = {
                 autoUpgrade.channel = "Rapid"
@@ -65,7 +65,7 @@ _items = [
             cleanupTimeoutSeconds = 1800
             skipDelete = False
             # initResources: Install infrastructure Configuration packages
-            # Note: aws-base-stack and aws-pod-identity are auto-installed as dependencies
+            # Note: aws-lbc-stack and aws-pod-identity are auto-installed as dependencies
             initResources = [
                 # aws-auto-eks-cluster Configuration package (provides AutoEKSCluster XRD)
                 {
@@ -186,7 +186,7 @@ _items = [
                     }
                 }
             ]
-            # manifests: All XRs that need cleanup (AutoEKSCluster, BaseStack)
+            # manifests: All XRs that need cleanup (AutoEKSCluster, LBCStack)
             # Note: Uses persistent hops-test network - no Network manifest needed
             manifests = [
                 # 1. AutoEKSCluster - uses subnet IDs from persistent hops-test network
@@ -225,8 +225,8 @@ _items = [
                         }
                     }
                 }
-                # 2. aws BaseStack - installs ALB controller with AWS Pod Identity
-                awsv1alpha1.BaseStack {
+                # 2. aws LBCStack - installs ALB controller with AWS Pod Identity
+                awsv1alpha1.LBCStack {
                     metadata.name = "e2etest-lbc"
                     metadata.namespace = _namespace
                     spec = {

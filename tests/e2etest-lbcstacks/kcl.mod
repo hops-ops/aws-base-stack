@@ -1,5 +1,5 @@
 [package]
-name = "e2etest-basestacks"
+name = "e2etest-lbcstacks"
 version = "0.0.1"
 
 [dependencies]
