@@ -36,8 +36,8 @@
 # Compute status output
 # ==============================================================================
 
-# Ready state determined by function-auto-ready
-{{- $ready := false }}
+# Overall readiness requires both workload installation and AWS Pod Identity.
+{{- $ready := and $helmReleaseReady $podIdentityReady }}
 
 {{- $state = set $state "observed" (dict
   "helmRelease" (dict "ready" $helmReleaseReady)
