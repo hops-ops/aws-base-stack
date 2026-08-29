@@ -18,11 +18,11 @@ A Crossplane Configuration package that installs the AWS Load Balancer Controlle
 
 - Crossplane installed in the cluster
 - Crossplane providers:
-  - `provider-helm` (>=v1 <v2)
+  - `provider-helm` (^v1)
 - Crossplane configurations:
-  - `aws-pod-identity` (>=v0 <v1)
+  - `aws-pod-identity` (^v0)
 - Crossplane functions:
-  - `function-auto-ready` (>=v0 <v1)
+  - `function-auto-ready` (^v0)
 
 ## Quick Start
 
